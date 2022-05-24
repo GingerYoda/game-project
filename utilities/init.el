@@ -28,6 +28,13 @@
 ; Sets tab size
 (setq-default tab-width 4)
 
+; C-style								 
+(setq c-default-style "linux")
+(setq c-basic-offset 4)
+g(add-hook 'c-mode-common-hook
+          (lambda ()
+             (c-set-offset 'case-label '+)))
+
 ;; Make ESC quit prompts
 (global-set-key (kbd "<escape>") 'keyboard-escape-quit)
 
