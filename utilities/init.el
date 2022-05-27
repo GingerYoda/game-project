@@ -43,3 +43,15 @@ g(add-hook 'c-mode-common-hook
 
 ;Set default folder mainly for file visit purposes
 (setq default-directory "c:/Projects/")
+
+;Keybindings
+(global-set-key (kbd "M-n") 'forward-paragraph)
+(global-set-key (kbd "M-p") 'backward-paragraph)
+
+(global-set-key (kbd "C-ä") 'forward-char)
+(global-set-key (kbd "C-ö") 'backward-char)
+
+(global-set-key (kbd "M-ä") 'forward-word)
+(global-set-key (kbd "M-ö") 'backward-word)
+
+
