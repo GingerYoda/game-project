@@ -8,14 +8,53 @@ oskari.perikangas@gmail.com
 #define globalVariable static;
 #define internal static;
 
-// TODO: Change this later to not global.
+// TODO: Change these globals to not-globals
 globalVariable bool running;
+globalVariable BITMAPINFO BitmapInfo;
+globalVariable void *BitmapMemory;
+globalVariable HBITMAP BitmapHandle;
+globalVariable HDC BitmapDeviceContext;
 
-internal void ResizeDIBSection()
+internal void win32ResizeDIBSection(int width, int height)
 {
+	// TODO: Maybe don't free first
+	if(BitmapHandle)
+	{
+		DeleteObject(BitmapHandle);
+	}
+	if(!BitmapDeviceContext)
+	{
+		BitmapDeviceContext = CreateCompatibleDC(0);
+	}
+	
+	BitmapInfo.bmiHeader.biSize = sizeof(BitmapInfo.bmiHeader);
+	BitmapInfo.bmiHeader.biWidth = width;
+	BitmapInfo.bmiHeader.biHeight = height;
+	BitmapInfo.bmiHeader.biPlanes = 1;
+	BitmapInfo.bmiHeader.biBitCount = 32;
+	BitmapInfo.bmiHeader.biCompression = BI_RGB;
+	
+	BitmapHandle = CreateDIBSection(
+		BitmapDeviceContext,
+		&BitmapInfo,
+		DIB_RGB_COLORS,
+		&BitmapMemory,
+		0, 0);
 }
 
-LRESULT  MainWindowCallback(
+internal void win32UpdateWindow(HDC DeviceContext, int x, int y, int width, int height)
+{
+	StretchDIBits(DeviceContext,
+				  x, y, width, height, // This is the target DIB
+				  x, y, width, height, // This is the source DIB
+				  BitmapMemory,
+				  &BitmapInfo,
+				  DIB_RGB_COLORS,
+				  SRCCOPY);
+
+}
+
+LRESULT win32MainWindowCallback(
 						   HWND window,
 						   UINT message ,
 						   WPARAM wParam,
@@ -28,7 +67,11 @@ LRESULT  MainWindowCallback(
 	{
 	    case WM_SIZE :
 		{
-			OutputDebugString("WM_SIZE\n");
+			RECT clientRect;
+			GetClientRect(window, &clientRect);
+			int width = clientRect.right - clientRect.left;
+			int height = clientRect.bottom - clientRect.top;
+			win32ResizeDIBSection(width, height);
 		}break;
 
 	    case WM_DESTROY:
@@ -54,19 +97,10 @@ LRESULT  MainWindowCallback(
 			HDC DeviceContext =  BeginPaint(window, &Paint);
 			int x      = Paint.rcPaint.left;
 			int y      = Paint.rcPaint.top;
-			int width  = Paint.rcPaint.right;
-			int height = Paint.rcPaint.bottom;
-			localPersist DWORD Operation = WHITENESS;
-			PatBlt(DeviceContext, x, y, width, height, Operation);
-			if (Operation == WHITENESS)
-			{
-				Operation = BLACKNESS;
-			}
-			else
-			{
-				Operation = WHITENESS;
-			}
-			EndPaint(window, &Paint);
+			int width  = Paint.rcPaint.right - Paint.rcPaint.left ;
+			int height = Paint.rcPaint.bottom - Paint.rcPaint.top;
+			win32UpdateWindow(DeviceContext, x, y, width, height);
+   			EndPaint(window, &Paint);
 		}break;
 		
 		default:
@@ -88,7 +122,7 @@ wWinMain(HINSTANCE  hInstance,
     WNDCLASS WindowClass = {};
 
 	WindowClass.style = CS_OWNDC|CS_HREDRAW|CS_VREDRAW;
-	WindowClass.lpfnWndProc = MainWindowCallback;
+	WindowClass.lpfnWndProc = win32MainWindowCallback;
 	WindowClass.hInstance = hInstance;
 //	WindowClass.hIcon;
 	WindowClass.lpszClassName = "KalevalapeliWindowClass";

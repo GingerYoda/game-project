@@ -31,7 +31,8 @@
 ; C-style								 
 (setq c-default-style "linux")
 (setq c-basic-offset 4)
-g(add-hook 'c-mode-common-hook
+
+(add-hook 'c-mode-common-hook
           (lambda ()
              (c-set-offset 'case-label '+)))
 
